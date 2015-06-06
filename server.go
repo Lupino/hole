@@ -3,6 +3,7 @@ package hole
 import (
     "log"
     "net"
+    "bytes"
     "strings"
     "github.com/satori/go.uuid"
 )
@@ -11,6 +12,7 @@ type Server struct {
     clientConn Conn
     clientAlive bool
     alive bool
+    sessions map[string]Session
 }
 
 func (server Server) Serve(addr string) {
@@ -32,7 +34,7 @@ func (server Server) Serve(addr string) {
         if server.clientAlive {
             go server.handleConnection(conn)
         } else {
-            server.RegisterClient(conn)
+            go server.RegisterClient(conn)
         }
     }
 }
@@ -40,6 +42,7 @@ func (server Server) Serve(addr string) {
 func (server *Server) handleConnection(conn net.Conn) {
     sessionId := uuid.NewV4().Bytes()
     session := NewSession(sessionId, server.clientConn)
+    server.sessions[string(sessionId)] = session
     go PipeThenClose(conn, session.w)
     PipeThenClose(session.r, conn)
 }
@@ -47,8 +50,25 @@ func (server *Server) handleConnection(conn net.Conn) {
 func (server *Server) RegisterClient(conn net.Conn) {
     server.clientConn = NewServerConn(conn)
     server.clientAlive = true
-    if _, err := server.clientConn.Receive(); err != nil {
+    defer server.clientConn.Close()
+    var err error
+    var payload []byte
+    if _, err = server.clientConn.Receive(); err != nil {
         server.clientAlive = false
-        server.clientConn.Close()
+        return
+    }
+    var sessionId, data []byte
+    var session Session
+    for {
+        if payload, err = server.clientConn.Receive(); err != nil {
+            break
+        }
+        sessionId, data = DecodePacket(payload)
+        session = server.sessions[string(sessionId)]
+        if bytes.Equal(data, []byte("EOF")) {
+            session.r.FeedEOF()
+        } else {
+            session.r.FeedData(data)
+        }
     }
 }
