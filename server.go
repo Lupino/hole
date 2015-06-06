@@ -34,7 +34,7 @@ func (server Server) Serve(addr string) {
         if server.clientAlive {
             go server.handleConnection(conn)
         } else {
-            go server.RegisterClient(conn)
+            go server.handleClient(conn)
         }
     }
 }
@@ -47,7 +47,7 @@ func (server *Server) handleConnection(conn net.Conn) {
     PipeThenClose(session.r, conn)
 }
 
-func (server *Server) RegisterClient(conn net.Conn) {
+func (server *Server) handleClient(conn net.Conn) {
     server.clientConn = NewServerConn(conn)
     server.clientAlive = true
     defer server.clientConn.Close()
