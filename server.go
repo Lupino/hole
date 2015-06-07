@@ -3,6 +3,7 @@ package hole
 import (
     "log"
     "net"
+    "sync"
     "bytes"
     "strings"
     "github.com/satori/go.uuid"
@@ -13,6 +14,7 @@ type Server struct {
     clientAlive bool
     alive bool
     sessions map[string]Session
+    sessionLocker *sync.RWMutex
 }
 
 func NewServer() *Server {
@@ -20,6 +22,7 @@ func NewServer() *Server {
     server.alive = true
     server.sessions = make(map[string]Session)
     server.clientAlive = false
+    server.sessionLocker = new(sync.RWMutex)
     return server
 }
 
@@ -47,10 +50,14 @@ func (server *Server) Serve(addr string) {
 func (server *Server) handleConnection(conn net.Conn) {
     sessionId := uuid.NewV4().Bytes()
     session := NewSession(sessionId, server.clientConn)
+    server.sessionLocker.Lock()
     server.sessions[string(sessionId)] = session
+    server.sessionLocker.Unlock()
     go PipeThenClose(conn, session.w)
     PipeThenClose(session.r, conn)
+    server.sessionLocker.Lock()
     delete(server.sessions, string(session.Id))
+    server.sessionLocker.Unlock()
 }
 
 func (server *Server) handleClient(conn net.Conn) {
@@ -71,7 +78,10 @@ func (server *Server) handleClient(conn net.Conn) {
             break
         }
         sessionId, data = DecodePacket(payload)
-        if session, ok = server.sessions[string(sessionId)]; !ok {
+        server.sessionLocker.Lock()
+        session, ok = server.sessions[string(sessionId)]
+        server.sessionLocker.Unlock()
+        if !ok {
             continue
         }
         if bytes.Equal(data, []byte("EOF")) {

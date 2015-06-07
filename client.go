@@ -2,12 +2,14 @@ package hole
 
 import (
     "net"
+    "sync"
     "bytes"
     "strings"
 )
 
 type Client struct {
     sessions map[string]Session
+    sessionLocker *sync.RWMutex
     conn Conn
     subAddr string
     alive bool
@@ -17,6 +19,7 @@ func NewClient(subAddr string) *Client {
     var client = new(Client)
     client.subAddr = subAddr
     client.sessions = make(map[string]Session)
+    client.sessionLocker = new(sync.RWMutex)
     return client
 }
 
@@ -50,7 +53,9 @@ func (client *Client) Process() {
             break
         }
         sessionId, data = DecodePacket(payload)
+        client.sessionLocker.Lock()
         session, ok = client.sessions[string(sessionId)]
+        client.sessionLocker.Unlock()
         if !ok {
             session = client.NewSession(sessionId)
             go client.handleSession(session)
@@ -65,7 +70,9 @@ func (client *Client) Process() {
 
 func (client *Client) NewSession(sessionId []byte) Session {
     var session = NewSession(sessionId, client.conn)
+    client.sessionLocker.Lock()
     client.sessions[string(sessionId)] = session
+    client.sessionLocker.Unlock()
     return session
 }
 
@@ -73,10 +80,14 @@ func (client *Client) handleSession(session Session) {
     parts := strings.SplitN(client.subAddr, "://", 2)
     var conn, err = net.Dial(parts[0], parts[1])
     if err != nil {
+        client.sessionLocker.Lock()
         delete(client.sessions, string(session.Id))
+        client.sessionLocker.Unlock()
         return
     }
     go PipeThenClose(conn, session.w)
     PipeThenClose(session.r, conn)
+    client.sessionLocker.Lock()
     delete(client.sessions, string(session.Id))
+    client.sessionLocker.Unlock()
 }
