@@ -45,6 +45,7 @@ func (server *Server) handleConnection(conn net.Conn) {
     server.sessions[string(sessionId)] = session
     go PipeThenClose(conn, session.w)
     PipeThenClose(session.r, conn)
+    delete(server.sessions, string(session.Id))
 }
 
 func (server *Server) handleClient(conn net.Conn) {
