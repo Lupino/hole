@@ -51,7 +51,7 @@ func (r *ReadStream) FeedEOF () {
 func (r *ReadStream) Read(buf []byte) (length int, err error) {
     nRead := len(buf)
     for {
-        if r.bufferSize >= nRead || r.eof != nil {
+        if r.bufferSize > 0 || r.eof != nil {
             break
         }
         r.waiting = true
@@ -65,7 +65,7 @@ func (r *ReadStream) Read(buf []byte) (length int, err error) {
 
     r.locker.Lock()
     data := bytes.Join(r.buffer, nil)
-    if r.bufferSize > nRead {
+    if r.bufferSize >= nRead {
         copy(buf[0:], data[:nRead])
         r.buffer = [][]byte{data[nRead:]}
         r.bufferSize = r.bufferSize - nRead
