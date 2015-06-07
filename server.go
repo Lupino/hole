@@ -15,7 +15,15 @@ type Server struct {
     sessions map[string]Session
 }
 
-func (server Server) Serve(addr string) {
+func NewServer() *Server {
+    var server = new(Server)
+    server.alive = true
+    server.sessions = make(map[string]Session)
+    server.clientAlive = false
+    return server
+}
+
+func (server *Server) Serve(addr string) {
     parts := strings.SplitN(addr, "://", 2)
     listen, err := net.Listen(parts[0], parts[1])
     if err != nil {
@@ -56,13 +64,16 @@ func (server *Server) handleClient(conn net.Conn) {
         return
     }
     var sessionId, data []byte
+    var ok bool
     var session Session
     for server.alive {
         if payload, err = server.clientConn.Receive(); err != nil {
             break
         }
         sessionId, data = DecodePacket(payload)
-        session = server.sessions[string(sessionId)]
+        if session, ok = server.sessions[string(sessionId)]; !ok {
+            continue
+        }
         if bytes.Equal(data, []byte("EOF")) {
             session.r.FeedEOF()
         } else {
