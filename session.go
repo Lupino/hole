@@ -12,6 +12,7 @@ func NewSession(sessionId []byte, conn Conn) Session {
         r: NewReadStream(),
         w: &WriteStream{
             conn: conn,
+            sessionId: sessionId,
         },
     }
 }
