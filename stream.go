@@ -71,5 +71,6 @@ func (w *WriteStream) Write(data []byte) (n int, err error) {
 
 func (w *WriteStream) Close() error {
     // return w.conn.Close()
-    return nil
+    _, err := w.Write([]byte("EOF"))
+    return err
 }
