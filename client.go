@@ -13,16 +13,35 @@ type Client struct {
     alive bool
 }
 
-func (client *Client) handle(conn net.Conn) {
-    client.conn = NewClientConn(conn)
+func NewClient(subAddr string) *Client {
+    var client = new(Client)
+    client.subAddr = subAddr
+    client.sessions = make(map[string]Session)
+    return client
+}
+
+func (client *Client) Connect(addr string) {
+    parts := strings.SplitN(addr, "://", 2)
+    var conn, err = net.Dial(parts[0], parts[1])
     client.alive = true
-    defer client.conn.Close()
-    var err error
-    var payload []byte
-    if _, err = client.conn.Receive(); err != nil {
+    if err != nil {
         client.alive = false
         return
     }
+
+    client.conn = NewClientConn(conn)
+
+    if err = client.conn.Send([]byte("Connected")); err != nil {
+        client.alive = false
+        client.conn.Close()
+        return
+    }
+}
+
+func (client *Client) Process() {
+    defer client.conn.Close()
+    var err error
+    var payload []byte
     var sessionId, data []byte
     var session Session
     var ok bool
