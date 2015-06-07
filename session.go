@@ -9,7 +9,7 @@ type Session struct {
 func NewSession(sessionId []byte, conn Conn) Session {
     return Session{
         Id: sessionId,
-        r: &ReadStream{},
+        r: NewReadStream(),
         w: &WriteStream{
             conn: conn,
         },

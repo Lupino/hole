@@ -12,11 +12,20 @@ type ReadStream struct {
     eof error
     locker *sync.RWMutex
     waiter *sync.RWMutex
+    waiting bool
 }
 
 type WriteStream struct {
     sessionId []byte
     conn Conn
+}
+
+func NewReadStream() *ReadStream {
+    var rs = new(ReadStream)
+    rs.locker = new(sync.RWMutex)
+    rs.waiter = new(sync.RWMutex)
+    rs.waiting = false
+    return rs
 }
 
 func (r *ReadStream) FeedData (buf []byte) {
@@ -25,12 +34,18 @@ func (r *ReadStream) FeedData (buf []byte) {
     r.bufferSize = r.bufferSize + len(buf)
     r.locker.Unlock()
 
-    r.waiter.Unlock()
+    if r.waiting {
+        r.waiting = false
+        r.waiter.Unlock()
+    }
 }
 
 func (r *ReadStream) FeedEOF () {
     r.eof = io.EOF
-    r.waiter.Unlock()
+    if r.waiting {
+        r.waiting = false
+        r.waiter.Unlock()
+    }
 }
 
 func (r *ReadStream) Read(buf []byte) (length int, err error) {
@@ -39,6 +54,7 @@ func (r *ReadStream) Read(buf []byte) (length int, err error) {
         if r.bufferSize >= nRead || r.eof != nil {
             break
         }
+        r.waiting = true
         r.waiter.Lock()
     }
 
@@ -65,7 +81,8 @@ func (r *ReadStream) Read(buf []byte) (length int, err error) {
 }
 
 func (w *WriteStream) Write(data []byte) (n int, err error) {
-    n, err = w.conn.Write(EncodePacket(w.sessionId, data))
+    err = w.conn.Send(EncodePacket(w.sessionId, data))
+    n = len(data)
     return
 }
 
