@@ -23,10 +23,7 @@ func (server Server) Serve(addr string) {
     }
     defer listen.Close()
     log.Printf("Hole proxy server started on %s\n", addr)
-    for {
-        if !server.alive {
-            break
-        }
+    for server.alive {
         conn, err := listen.Accept()
         if err != nil {
             log.Fatal(err)
@@ -60,7 +57,7 @@ func (server *Server) handleClient(conn net.Conn) {
     }
     var sessionId, data []byte
     var session Session
-    for {
+    for server.alive {
         if payload, err = server.clientConn.Receive(); err != nil {
             break
         }
@@ -72,4 +69,5 @@ func (server *Server) handleClient(conn net.Conn) {
             session.r.FeedData(data)
         }
     }
+    server.clientAlive = false
 }

@@ -26,7 +26,7 @@ func (client *Client) handle(conn net.Conn) {
     var sessionId, data []byte
     var session Session
     var ok bool
-    for {
+    for client.alive {
         if payload, err = client.conn.Receive(); err != nil {
             break
         }
