@@ -61,7 +61,7 @@ func PipeThenClose(src io.Reader, dst io.WriteCloser) {
     for {
         n, err := src.Read(buf)
         if n > 0 {
-            if _, err = dst.Write(buf); err != nil {
+            if _, err = dst.Write(buf[:n]); err != nil {
                 break
             }
         }
