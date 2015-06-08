@@ -1,6 +1,7 @@
 package hole
 
 import (
+    "io"
     "log"
     "net"
     "sync"
@@ -48,6 +49,7 @@ func (server *Server) Serve(addr string) {
 }
 
 func (server *Server) handleConnection(conn net.Conn) {
+    log.Printf("Handle connection: %s\n", conn.RemoteAddr().String())
     sessionId := uuid.NewV4().Bytes()
     session := NewSession(sessionId, server.clientConn)
     server.sessionLocker.Lock()
@@ -61,6 +63,7 @@ func (server *Server) handleConnection(conn net.Conn) {
 }
 
 func (server *Server) handleClient(conn net.Conn) {
+    log.Printf("New Client: %s\n", conn.RemoteAddr().String())
     server.clientConn = NewServerConn(conn)
     server.clientAlive = true
     defer server.clientConn.Close()
@@ -75,6 +78,11 @@ func (server *Server) handleClient(conn net.Conn) {
     var session Session
     for server.alive {
         if payload, err = server.clientConn.Receive(); err != nil {
+            if err == io.EOF {
+                log.Printf("Client: %s leave.\n", conn.RemoteAddr().String())
+            } else {
+                log.Printf("Error: %s\n", err.Error())
+            }
             break
         }
         sessionId, data = DecodePacket(payload)

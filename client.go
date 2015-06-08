@@ -2,6 +2,7 @@ package hole
 
 import (
     "net"
+    "log"
     "sync"
     "bytes"
     "strings"
@@ -24,10 +25,12 @@ func NewClient(subAddr string) *Client {
 }
 
 func (client *Client) Connect(addr string) {
+    log.Printf("Connect Hole server: %s\n", addr)
     parts := strings.SplitN(addr, "://", 2)
     var conn, err = net.Dial(parts[0], parts[1])
     client.alive = true
     if err != nil {
+        log.Fatal("Is the hole server started?")
         client.alive = false
         return
     }
@@ -42,6 +45,7 @@ func (client *Client) Connect(addr string) {
 }
 
 func (client *Client) Process() {
+    log.Printf("Process: %s\n", client.subAddr)
     defer client.conn.Close()
     var err error
     var payload []byte
@@ -69,6 +73,7 @@ func (client *Client) Process() {
 }
 
 func (client *Client) NewSession(sessionId []byte) Session {
+    log.Printf("New Session: %s\n", sessionId)
     var session = NewSession(sessionId, client.conn)
     client.sessionLocker.Lock()
     client.sessions[string(sessionId)] = session
@@ -82,6 +87,7 @@ func (client *Client) handleSession(session Session) {
     if err != nil {
         client.sessionLocker.Lock()
         delete(client.sessions, string(session.Id))
+        log.Printf("Session: %s leave.\n", session.Id)
         client.sessionLocker.Unlock()
         return
     }
@@ -89,5 +95,6 @@ func (client *Client) handleSession(session Session) {
     PipeThenClose(session.r, conn)
     client.sessionLocker.Lock()
     delete(client.sessions, string(session.Id))
+    log.Printf("Session: %s leave.\n", session.Id)
     client.sessionLocker.Unlock()
 }
