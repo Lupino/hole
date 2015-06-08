@@ -98,5 +98,8 @@ func (server *Server) handleClient(conn net.Conn) {
             session.r.FeedData(data)
         }
     }
+    for _, session := range server.sessions {
+        session.r.FeedEOF()
+    }
     server.clientAlive = false
 }
