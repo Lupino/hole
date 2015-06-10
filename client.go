@@ -73,7 +73,7 @@ func (client *Client) Process() {
 }
 
 func (client *Client) NewSession(sessionId []byte) Session {
-    log.Printf("New Session: %s\n", sessionId)
+    log.Printf("New Session: %x\n", sessionId)
     var session = NewSession(sessionId, client.conn)
     client.sessionLocker.Lock()
     client.sessions[string(sessionId)] = session
@@ -87,7 +87,7 @@ func (client *Client) handleSession(session Session) {
     if err != nil {
         client.sessionLocker.Lock()
         delete(client.sessions, string(session.Id))
-        log.Printf("Session: %s leave.\n", session.Id)
+        log.Printf("Session: %x leave.\n", session.Id)
         client.sessionLocker.Unlock()
         return
     }
@@ -95,6 +95,6 @@ func (client *Client) handleSession(session Session) {
     PipeThenClose(session.r, conn)
     client.sessionLocker.Lock()
     delete(client.sessions, string(session.Id))
-    log.Printf("Session: %s leave.\n", session.Id)
+    log.Printf("Session: %x leave.\n", session.Id)
     client.sessionLocker.Unlock()
 }
