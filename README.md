@@ -46,3 +46,13 @@ Example:
     ssh root@120.26.120.168 -p 4000
 
     # Now A can visit C via B server
+
+Connect with tls
+----------------
+
+    cd $GOPATH/src/github.com/Lupino/hole/cmd
+    go run gen.go   # gen the key
+    cd hole-server
+    hole-server -tls
+    cd ../hole-local
+    hole-local -tls
