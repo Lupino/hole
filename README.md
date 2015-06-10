@@ -5,7 +5,7 @@ When I visit raspberry pi' ssh server on some places,
 I must set port forwarding on the home route, and set a dynamic DNS.
 If the route is not your's, you will helpless.
 
-I think it may have another way, so I try ssh port forwarding `ssh -CfNgR remote-port:localhost:local-port user@remote`, then vist the remote-port.
+I think it may have another way, so I try ssh port forwarding `ssh -CfNgR remote-port:localhost:local-port user@remote`, then visit the remote-port.
 
 The hole is an other way similar ssh port forwarding.
 On the global server create a `hole-server`, and the target host start `hole-local`.
