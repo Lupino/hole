@@ -7,6 +7,10 @@ import (
     "sync"
     "bytes"
     "strings"
+    "crypto/tls"
+    "crypto/x509"
+    "crypto/rand"
+    "io/ioutil"
     "github.com/satori/go.uuid"
 )
 
@@ -16,6 +20,8 @@ type Server struct {
     alive bool
     sessions map[string]Session
     sessionLocker *sync.RWMutex
+    tlsConfig tls.Config
+    tls bool
 }
 
 func NewServer() *Server {
@@ -24,6 +30,7 @@ func NewServer() *Server {
     server.sessions = make(map[string]Session)
     server.clientAlive = false
     server.sessionLocker = new(sync.RWMutex)
+    server.tls = false
     return server
 }
 
@@ -48,6 +55,29 @@ func (server *Server) Serve(addr string) {
     }
 }
 
+func (server *Server) ConfigTLS(certFile, privFile string) {
+    ca_b, _ := ioutil.ReadFile(certFile)
+    ca, _ := x509.ParseCertificate(ca_b)
+    priv_b, _ := ioutil.ReadFile(privFile)
+    priv, _ := x509.ParsePKCS1PrivateKey(priv_b)
+
+    pool := x509.NewCertPool()
+    pool.AddCert(ca)
+
+    cert := tls.Certificate{
+        Certificate: [][]byte{ ca_b },
+        PrivateKey: priv,
+    }
+
+    server.tlsConfig = tls.Config{
+        ClientAuth: tls.RequireAndVerifyClientCert,
+        Certificates: []tls.Certificate{cert},
+        ClientCAs: pool,
+    }
+    server.tlsConfig.Rand = rand.Reader
+    server.tls = true
+}
+
 func (server *Server) handleConnection(conn net.Conn) {
     log.Printf("Handle connection: %s\n", conn.RemoteAddr().String())
     sessionId := uuid.NewV4().Bytes()
@@ -64,6 +94,9 @@ func (server *Server) handleConnection(conn net.Conn) {
 
 func (server *Server) handleClient(conn net.Conn) {
     log.Printf("New Client: %s\n", conn.RemoteAddr().String())
+    if server.tls {
+        conn = tls.Server(conn, &server.tlsConfig)
+    }
     server.clientConn = NewServerConn(conn)
     server.clientAlive = true
     defer server.clientConn.Close()
