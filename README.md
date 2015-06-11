@@ -53,6 +53,6 @@ Connect with tls
     cd $GOPATH/src/github.com/Lupino/hole/cmd
     go run gen.go   # gen the key
     cd hole-server
-    hole-server -tls
+    hole-server -use-tls
     cd ../hole-local
-    hole-local -tls
+    hole-local -use-tls
