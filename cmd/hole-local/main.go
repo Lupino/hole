@@ -1,6 +1,8 @@
 package main
 
 import (
+    "log"
+    "time"
     "flag"
     "github.com/Lupino/hole"
 )
@@ -10,6 +12,8 @@ var realAddr string
 var certFile string
 var privFile string
 var useTLS bool
+var defaultReTryTime = 1000
+var reTryTimes = defaultReTryTime
 
 func init() {
     flag.StringVar(&serverAddr, "addr", "tcp://127.0.0.1:4000", "Hole server address.")
@@ -25,6 +29,18 @@ func main() {
     if useTLS {
         client.ConfigTLS(certFile, privFile)
     }
-    client.Connect(serverAddr)
-    client.Process()
+
+    for {
+        if err := client.Connect(serverAddr); err != nil {
+            reTryTimes = reTryTimes - 1
+            if reTryTimes == 0 {
+                break
+            }
+            log.Printf("Retry after 2 second...")
+            time.Sleep(2 * time.Second)
+            continue
+        }
+        client.Process()
+        reTryTimes = defaultReTryTime
+    }
 }

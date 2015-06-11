@@ -44,29 +44,30 @@ func (client *Client) ConfigTLS(certFile, privFile string) {
     client.tlsConfig = tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
 }
 
-func (client *Client) Connect(addr string) {
+func (client *Client) Connect(addr string) (err error) {
     log.Printf("Connect Hole server: %s\n", addr)
     parts := strings.SplitN(addr, "://", 2)
     var conn net.Conn
-    var err error
     if client.tls {
         conn, err = tls.Dial(parts[0], parts[1], &client.tlsConfig)
     } else {
         conn, err = net.Dial(parts[0], parts[1])
     }
     if err != nil {
-        log.Fatal("Is the hole server started?")
+        log.Printf("Is the hole server started?\n")
         return
     }
 
     client.alive = true
     client.conn = NewClientConn(conn)
 
-    if err := client.conn.Send([]byte("Connected")); err != nil {
+    if err = client.conn.Send([]byte("Connected")); err != nil {
         client.alive = false
         client.conn.Close()
         return
     }
+
+    return
 }
 
 func (client *Client) Process() {
