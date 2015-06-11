@@ -16,7 +16,7 @@ func init() {
     flag.StringVar(&realAddr, "src", "tcp://127.0.0.1:8080", "Source server address.")
     flag.StringVar(&certFile, "cert", "cert.pem", "The cert file.")
     flag.StringVar(&privFile, "key", "cert.key", "The cert key file.")
-    flag.BoolVar(&useTLS, "tls", false, "use TLS")
+    flag.BoolVar(&useTLS, "use-tls", false, "use TLS")
     flag.Parse()
 }
 
