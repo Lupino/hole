@@ -96,6 +96,10 @@ func (client *Client) Process() {
             session.r.FeedData(data)
         }
     }
+    for _, session := range client.sessions {
+        session.r.FeedEOF()
+    }
+    client.alive = false
 }
 
 func (client *Client) NewSession(sessionId []byte) Session {
