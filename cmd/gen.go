@@ -1,14 +1,13 @@
-
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"crypto/rsa"
-	"crypto/rand"
-	"math/big"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"time"
 )
 
@@ -16,17 +15,17 @@ func main() {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(1653),
 		Subject: pkix.Name{
-			Country: []string{"China"},
-			Organization: []string{"huabot.com"},
+			Country:            []string{"China"},
+			Organization:       []string{"huabot.com"},
 			OrganizationalUnit: []string{"huabot.com"},
 		},
-		NotBefore: time.Now(),
-		NotAfter: time.Now().AddDate(10,0,0),
-		SubjectKeyId: []byte{1,2,3,4,5},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		SubjectKeyId:          []byte{1, 2, 3, 4, 5},
 		BasicConstraintsValid: true,
-		IsCA: true,
+		IsCA:        true,
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage: x509.KeyUsageDigitalSignature|x509.KeyUsageCertSign,
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
 
 	priv, _ := rsa.GenerateKey(rand.Reader, 1024)
@@ -48,15 +47,15 @@ func main() {
 	cert2 := &x509.Certificate{
 		SerialNumber: big.NewInt(1658),
 		Subject: pkix.Name{
-			Country: []string{"China"},
-			Organization: []string{"Fuck"},
+			Country:            []string{"China"},
+			Organization:       []string{"Fuck"},
 			OrganizationalUnit: []string{"FuckU"},
 		},
-		NotBefore: time.Now(),
-		NotAfter: time.Now().AddDate(10,0,0),
-		SubjectKeyId: []byte{1,2,3,4,6},
-		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage: x509.KeyUsageDigitalSignature|x509.KeyUsageCertSign,
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().AddDate(10, 0, 0),
+		SubjectKeyId: []byte{1, 2, 3, 4, 6},
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
 	priv2, _ := rsa.GenerateKey(rand.Reader, 1024)
 	pub2 := &priv2.PublicKey
@@ -81,4 +80,3 @@ func main() {
 	err3 := cert2_c.CheckSignatureFrom(ca_c)
 	log.Println("check signature", err3 == nil)
 }
-
