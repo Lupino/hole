@@ -38,3 +38,33 @@ func TestEncodeAndDecodePacket(t *testing.T) {
 		t.Fatalf("Payload: except: %x, got: %x", data, d)
 	}
 }
+
+type writer struct {
+	t      *testing.T
+	except []byte
+}
+
+func (w *writer) Write(buf []byte) (n int, err error) {
+	if !bytes.Equal(w.except, buf) {
+		w.t.Fatalf("Payload: except: %x, got: %x", w.except, buf)
+	}
+	return len(buf), nil
+}
+
+func (w *writer) Close() error {
+	return nil
+}
+
+func TestPipeThenClose(t *testing.T) {
+	r := NewReadStream()
+	data := []byte("This is a payload.")
+
+	w := new(writer)
+	w.t = t
+	w.except = data
+
+	go PipeThenClose(r, w)
+
+	r.FeedData(data)
+	r.FeedEOF()
+}
