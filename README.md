@@ -1,6 +1,8 @@
 A hole to pass through the gateway.
 ==================================
 
+[![Build Status](https://travis-ci.org/Lupino/hole.svg?branch=master)](https://travis-ci.org/Lupino/hole)
+
 When I visit raspberry pi' ssh server on some places,
 I must set port forwarding on the home route, and set a dynamic DNS.
 If the route is not your's, you will helpless.
