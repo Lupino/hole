@@ -16,8 +16,8 @@ func main() {
 		SerialNumber: big.NewInt(1653),
 		Subject: pkix.Name{
 			Country:            []string{"China"},
-			Organization:       []string{"huabot.com"},
-			OrganizationalUnit: []string{"huabot.com"},
+			Organization:       []string{"HoleHUB"},
+			OrganizationalUnit: []string{"holehub.com"},
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
@@ -35,11 +35,11 @@ func main() {
 		log.Println("create ca failed", err)
 		return
 	}
-	ca_f := "hole-server/ca.pem"
+	ca_f := "ca.pem"
 	log.Println("write to", ca_f)
 	ioutil.WriteFile(ca_f, ca_b, 0777)
 
-	priv_f := "hole-server/ca.key"
+	priv_f := "ca.key"
 	priv_b := x509.MarshalPKCS1PrivateKey(priv)
 	log.Println("write to", priv_f)
 	ioutil.WriteFile(priv_f, priv_b, 0777)
@@ -48,8 +48,8 @@ func main() {
 		SerialNumber: big.NewInt(1658),
 		Subject: pkix.Name{
 			Country:            []string{"China"},
-			Organization:       []string{"Fuck"},
-			OrganizationalUnit: []string{"FuckU"},
+			Organization:       []string{"HoleHUB"},
+			OrganizationalUnit: []string{"holehub.com"},
 		},
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(10, 0, 0),
@@ -65,11 +65,11 @@ func main() {
 		return
 	}
 
-	cert2_f := "hole-local/cert.pem"
+	cert2_f := "cert.pem"
 	log.Println("write to", cert2_f)
 	ioutil.WriteFile(cert2_f, cert2_b, 0777)
 
-	priv2_f := "hole-local/cert.key"
+	priv2_f := "cert.key"
 	priv2_b := x509.MarshalPKCS1PrivateKey(priv2)
 	log.Println("write to", priv2_f)
 	ioutil.WriteFile(priv2_f, priv2_b, 0777)
