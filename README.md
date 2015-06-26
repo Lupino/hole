@@ -10,7 +10,7 @@ If the route is not your's, you will helpless.
 I think it may have another way, so I try ssh port forwarding `ssh -CfNgR remote-port:localhost:local-port user@remote`, then visit the remote-port.
 
 The hole is an other way similar ssh port forwarding.
-On the global server create a `holed`, and the target host start `hole-local`.
+On the global server create a `holed`, and the target host start `hole`.
 Last you can visit the `holed` to replace the real server.
 
 The hole suit the situation: A(private) can connect B(global), C(private) can connect B,
