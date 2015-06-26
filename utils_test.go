@@ -2,7 +2,6 @@ package hole
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/satori/go.uuid"
 	"testing"
 )
@@ -14,7 +13,6 @@ func TestHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf("%v\n", header)
 	var lengthGot = ParseHeader(header)
 
 	if lengthGot != length {
