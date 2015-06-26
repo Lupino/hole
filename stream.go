@@ -58,9 +58,10 @@ func (r *ReadStream) Read(buf []byte) (length int, err error) {
 		r.waiter.Lock()
 	}
 
+	err = r.eof
 	if r.bufferSize == 0 {
-		err = r.eof
-		return
+		r.eof = io.EOF
+		return 0, io.EOF
 	}
 
 	r.locker.Lock()
