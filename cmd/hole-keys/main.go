@@ -5,11 +5,19 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"flag"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"time"
 )
+
+var prefix string
+
+func init() {
+	flag.StringVar(&prefix, "prefix", "", "The certificate file prefix.")
+	flag.Parse()
+}
 
 func main() {
 	ca := &x509.Certificate{
@@ -35,11 +43,11 @@ func main() {
 		log.Println("create ca failed", err)
 		return
 	}
-	ca_f := "ca.pem"
+	ca_f := prefix + "ca.pem"
 	log.Println("write to", ca_f)
 	ioutil.WriteFile(ca_f, ca_b, 0444)
 
-	priv_f := "ca.key"
+	priv_f := prefix + "ca.key"
 	priv_b := x509.MarshalPKCS1PrivateKey(priv)
 	log.Println("write to", priv_f)
 	ioutil.WriteFile(priv_f, priv_b, 0444)
@@ -65,11 +73,11 @@ func main() {
 		return
 	}
 
-	cert2_f := "cert.pem"
+	cert2_f := prefix + "cert.pem"
 	log.Println("write to", cert2_f)
 	ioutil.WriteFile(cert2_f, cert2_b, 0444)
 
-	priv2_f := "cert.key"
+	priv2_f := prefix + "cert.key"
 	priv2_b := x509.MarshalPKCS1PrivateKey(priv2)
 	log.Println("write to", priv2_f)
 	ioutil.WriteFile(priv2_f, priv2_b, 0444)
