@@ -45,12 +45,12 @@ func main() {
 	}
 	ca_f := prefix + "ca.pem"
 	log.Println("write to", ca_f)
-	ioutil.WriteFile(ca_f, ca_b, 0444)
+	ioutil.WriteFile(ca_f, ca_b, 0600)
 
 	priv_f := prefix + "ca.key"
 	priv_b := x509.MarshalPKCS1PrivateKey(priv)
 	log.Println("write to", priv_f)
-	ioutil.WriteFile(priv_f, priv_b, 0444)
+	ioutil.WriteFile(priv_f, priv_b, 0600)
 
 	cert2 := &x509.Certificate{
 		SerialNumber: big.NewInt(1658),
@@ -75,12 +75,12 @@ func main() {
 
 	cert2_f := prefix + "cert.pem"
 	log.Println("write to", cert2_f)
-	ioutil.WriteFile(cert2_f, cert2_b, 0444)
+	ioutil.WriteFile(cert2_f, cert2_b, 0600)
 
 	priv2_f := prefix + "cert.key"
 	priv2_b := x509.MarshalPKCS1PrivateKey(priv2)
 	log.Println("write to", priv2_f)
-	ioutil.WriteFile(priv2_f, priv2_b, 0444)
+	ioutil.WriteFile(priv2_f, priv2_b, 0600)
 
 	ca_c, _ := x509.ParseCertificate(ca_b)
 	cert2_c, _ := x509.ParseCertificate(cert2_b)
