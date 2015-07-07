@@ -47,12 +47,32 @@ func (server *Server) Serve(addr string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if server.clientAlive {
+		if server.clientIsAlive() {
 			go server.handleConnection(conn)
 		} else {
 			go server.handleClient(conn)
 		}
 	}
+}
+
+func (server *Server) RegisterClient(conn net.Conn) {
+	server.sessionLocker.Lock()
+	defer server.sessionLocker.Unlock()
+
+	server.clientConn = NewServerConn(conn)
+	server.clientAlive = true
+	var err error
+	if _, err = server.clientConn.Receive(); err != nil {
+		server.clientAlive = false
+		return
+	}
+}
+
+func (server *Server) clientIsAlive() bool {
+	server.sessionLocker.Lock()
+	defer server.sessionLocker.Unlock()
+
+	return server.clientAlive
 }
 
 func (server *Server) ConfigTLS(certFile, privFile string) {
@@ -80,9 +100,9 @@ func (server *Server) ConfigTLS(certFile, privFile string) {
 
 func (server *Server) handleConnection(conn net.Conn) {
 	log.Printf("Handle connection: %s\n", conn.RemoteAddr().String())
+	server.sessionLocker.Lock()
 	sessionId := uuid.NewV4().Bytes()
 	session := NewSession(sessionId, server.clientConn)
-	server.sessionLocker.Lock()
 	server.sessions[string(sessionId)] = session
 	server.sessionLocker.Unlock()
 	go PipeThenClose(conn, session.w)
@@ -97,15 +117,10 @@ func (server *Server) handleClient(conn net.Conn) {
 	if server.tls {
 		conn = tls.Server(conn, &server.tlsConfig)
 	}
-	server.clientConn = NewServerConn(conn)
-	server.clientAlive = true
+	server.RegisterClient(conn)
 	defer server.clientConn.Close()
 	var err error
 	var payload []byte
-	if _, err = server.clientConn.Receive(); err != nil {
-		server.clientAlive = false
-		return
-	}
 	var sessionId, data []byte
 	var ok bool
 	var session Session
@@ -134,5 +149,7 @@ func (server *Server) handleClient(conn net.Conn) {
 	for _, session := range server.sessions {
 		session.r.FeedEOF()
 	}
+	server.sessionLocker.Lock()
 	server.clientAlive = false
+	server.sessionLocker.Unlock()
 }

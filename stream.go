@@ -30,9 +30,9 @@ func NewReadStream() *ReadStream {
 
 func (r *ReadStream) FeedData(buf []byte) {
 	r.locker.Lock()
+	defer r.locker.Unlock()
 	r.buffer = append(r.buffer, buf)
 	r.bufferSize = r.bufferSize + len(buf)
-	r.locker.Unlock()
 
 	if r.waiting {
 		r.waiting = false
@@ -41,6 +41,8 @@ func (r *ReadStream) FeedData(buf []byte) {
 }
 
 func (r *ReadStream) FeedEOF() {
+	r.locker.Lock()
+	defer r.locker.Unlock()
 	r.eof = io.EOF
 	if r.waiting {
 		r.waiting = false
@@ -51,10 +53,13 @@ func (r *ReadStream) FeedEOF() {
 func (r *ReadStream) Read(buf []byte) (length int, err error) {
 	nRead := len(buf)
 	for {
+		r.locker.Lock()
 		if r.bufferSize > 0 || r.eof != nil {
+			r.locker.Unlock()
 			break
 		}
 		r.waiting = true
+		r.locker.Unlock()
 		r.waiter.Lock()
 	}
 
