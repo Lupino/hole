@@ -55,7 +55,7 @@ func (server *Server) Serve(addr string) {
 	}
 }
 
-func (server *Server) RegisterClient(conn net.Conn) {
+func (server *Server) AssignClient(conn net.Conn) bool {
 	server.locker.Lock()
 	defer server.locker.Unlock()
 
@@ -64,8 +64,9 @@ func (server *Server) RegisterClient(conn net.Conn) {
 	var err error
 	if _, err = server.clientConn.Receive(); err != nil {
 		server.clientAlive = false
-		return
+		return false
 	}
+	return true
 }
 
 func (server *Server) clientIsAlive() bool {
@@ -117,8 +118,11 @@ func (server *Server) handleClient(conn net.Conn) {
 	if server.useTLS {
 		conn = tls.Server(conn, &server.tlsConfig)
 	}
-	server.RegisterClient(conn)
-	defer server.clientConn.Close()
+
+	defer conn.Close()
+	if !server.AssignClient(conn) {
+		return
+	}
 	var err error
 	var payload []byte
 	var sessionId, data []byte
