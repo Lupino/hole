@@ -15,13 +15,13 @@ import (
 )
 
 type Server struct {
-	clientConn    Conn
-	clientAlive   bool
-	alive         bool
-	sessions      map[string]Session
-	sessionLocker *sync.RWMutex
-	tlsConfig     tls.Config
-	tls           bool
+	clientConn  Conn
+	clientAlive bool
+	alive       bool
+	sessions    map[string]Session
+	locker      *sync.RWMutex
+	tlsConfig   tls.Config
+	tls         bool
 }
 
 func NewServer() *Server {
@@ -29,7 +29,7 @@ func NewServer() *Server {
 	server.alive = true
 	server.sessions = make(map[string]Session)
 	server.clientAlive = false
-	server.sessionLocker = new(sync.RWMutex)
+	server.locker = new(sync.RWMutex)
 	server.tls = false
 	return server
 }
@@ -56,8 +56,8 @@ func (server *Server) Serve(addr string) {
 }
 
 func (server *Server) RegisterClient(conn net.Conn) {
-	server.sessionLocker.Lock()
-	defer server.sessionLocker.Unlock()
+	server.locker.Lock()
+	defer server.locker.Unlock()
 
 	server.clientConn = NewServerConn(conn)
 	server.clientAlive = true
@@ -69,8 +69,8 @@ func (server *Server) RegisterClient(conn net.Conn) {
 }
 
 func (server *Server) clientIsAlive() bool {
-	server.sessionLocker.Lock()
-	defer server.sessionLocker.Unlock()
+	server.locker.Lock()
+	defer server.locker.Unlock()
 
 	return server.clientAlive
 }
@@ -100,16 +100,16 @@ func (server *Server) ConfigTLS(certFile, privFile string) {
 
 func (server *Server) handleConnection(conn net.Conn) {
 	log.Printf("Handle connection: %s\n", conn.RemoteAddr().String())
-	server.sessionLocker.Lock()
+	server.locker.Lock()
 	sessionId := uuid.NewV4().Bytes()
 	session := NewSession(sessionId, server.clientConn)
 	server.sessions[string(sessionId)] = session
-	server.sessionLocker.Unlock()
+	server.locker.Unlock()
 	go PipeThenClose(conn, session.w)
 	PipeThenClose(session.r, conn)
-	server.sessionLocker.Lock()
+	server.locker.Lock()
 	delete(server.sessions, string(session.Id))
-	server.sessionLocker.Unlock()
+	server.locker.Unlock()
 }
 
 func (server *Server) handleClient(conn net.Conn) {
@@ -134,9 +134,9 @@ func (server *Server) handleClient(conn net.Conn) {
 			break
 		}
 		sessionId, data = DecodePacket(payload)
-		server.sessionLocker.Lock()
+		server.locker.Lock()
 		session, ok = server.sessions[string(sessionId)]
-		server.sessionLocker.Unlock()
+		server.locker.Unlock()
 		if !ok {
 			continue
 		}
@@ -149,7 +149,7 @@ func (server *Server) handleClient(conn net.Conn) {
 	for _, session := range server.sessions {
 		session.r.FeedEOF()
 	}
-	server.sessionLocker.Lock()
+	server.locker.Lock()
 	server.clientAlive = false
-	server.sessionLocker.Unlock()
+	server.locker.Unlock()
 }

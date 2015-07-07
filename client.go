@@ -12,20 +12,20 @@ import (
 )
 
 type Client struct {
-	sessions      map[string]Session
-	sessionLocker *sync.RWMutex
-	conn          Conn
-	subAddr       string
-	alive         bool
-	tlsConfig     tls.Config
-	tls           bool
+	sessions  map[string]Session
+	locker    *sync.RWMutex
+	conn      Conn
+	subAddr   string
+	alive     bool
+	tlsConfig tls.Config
+	tls       bool
 }
 
 func NewClient(subAddr string) *Client {
 	var client = new(Client)
 	client.subAddr = subAddr
 	client.sessions = make(map[string]Session)
-	client.sessionLocker = new(sync.RWMutex)
+	client.locker = new(sync.RWMutex)
 	client.tls = false
 	return client
 }
@@ -83,9 +83,9 @@ func (client *Client) Process() {
 			break
 		}
 		sessionId, data = DecodePacket(payload)
-		client.sessionLocker.Lock()
+		client.locker.Lock()
 		session, ok = client.sessions[string(sessionId)]
-		client.sessionLocker.Unlock()
+		client.locker.Unlock()
 		if !ok {
 			session = client.NewSession(sessionId)
 			go client.handleSession(session)
@@ -105,9 +105,9 @@ func (client *Client) Process() {
 func (client *Client) NewSession(sessionId []byte) Session {
 	log.Printf("New Session: %x\n", sessionId)
 	var session = NewSession(sessionId, client.conn)
-	client.sessionLocker.Lock()
+	client.locker.Lock()
 	client.sessions[string(sessionId)] = session
-	client.sessionLocker.Unlock()
+	client.locker.Unlock()
 	return session
 }
 
@@ -115,16 +115,16 @@ func (client *Client) handleSession(session Session) {
 	parts := strings.SplitN(client.subAddr, "://", 2)
 	var conn, err = net.Dial(parts[0], parts[1])
 	if err != nil {
-		client.sessionLocker.Lock()
+		client.locker.Lock()
 		delete(client.sessions, string(session.Id))
 		log.Printf("Session: %x leave.\n", session.Id)
-		client.sessionLocker.Unlock()
+		client.locker.Unlock()
 		return
 	}
 	go PipeThenClose(conn, session.w)
 	PipeThenClose(session.r, conn)
-	client.sessionLocker.Lock()
+	client.locker.Lock()
 	delete(client.sessions, string(session.Id))
 	log.Printf("Session: %x leave.\n", session.Id)
-	client.sessionLocker.Unlock()
+	client.locker.Unlock()
 }
