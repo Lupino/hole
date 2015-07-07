@@ -15,7 +15,7 @@ import (
 )
 
 type Server struct {
-	clientConn  Conn
+	client      Conn
 	clientAlive bool
 	alive       bool
 	sessions    map[string]Session
@@ -59,10 +59,10 @@ func (server *Server) AssignClient(conn net.Conn) bool {
 	server.locker.Lock()
 	defer server.locker.Unlock()
 
-	server.clientConn = NewServerConn(conn)
+	server.client = NewServerConn(conn)
 	server.clientAlive = true
 	var err error
-	if _, err = server.clientConn.Receive(); err != nil {
+	if _, err = server.client.Receive(); err != nil {
 		server.clientAlive = false
 		return false
 	}
@@ -103,7 +103,7 @@ func (server *Server) handleConnection(conn net.Conn) {
 	log.Printf("Handle connection: %s\n", conn.RemoteAddr().String())
 	server.locker.Lock()
 	sessionId := uuid.NewV4().Bytes()
-	session := NewSession(sessionId, server.clientConn)
+	session := NewSession(sessionId, server.client)
 	server.sessions[string(sessionId)] = session
 	server.locker.Unlock()
 	go PipeThenClose(conn, session.w)
@@ -129,7 +129,7 @@ func (server *Server) handleClient(conn net.Conn) {
 	var ok bool
 	var session Session
 	for server.alive {
-		if payload, err = server.clientConn.Receive(); err != nil {
+		if payload, err = server.client.Receive(); err != nil {
 			if err == io.EOF {
 				log.Printf("Client: %s leave.\n", conn.RemoteAddr().String())
 			} else {
