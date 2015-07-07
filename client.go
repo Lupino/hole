@@ -18,7 +18,7 @@ type Client struct {
 	subAddr   string
 	alive     bool
 	tlsConfig tls.Config
-	tls       bool
+	useTLS    bool
 }
 
 func NewClient(subAddr string) *Client {
@@ -26,12 +26,12 @@ func NewClient(subAddr string) *Client {
 	client.subAddr = subAddr
 	client.sessions = make(map[string]Session)
 	client.locker = new(sync.RWMutex)
-	client.tls = false
+	client.useTLS = false
 	return client
 }
 
 func (client *Client) ConfigTLS(certFile, privFile string) {
-	client.tls = true
+	client.useTLS = true
 	cert2_b, _ := ioutil.ReadFile(certFile)
 	priv2_b, _ := ioutil.ReadFile(privFile)
 	priv2, _ := x509.ParsePKCS1PrivateKey(priv2_b)
@@ -48,7 +48,7 @@ func (client *Client) Connect(addr string) (err error) {
 	log.Printf("Connect Hole server: %s\n", addr)
 	parts := strings.SplitN(addr, "://", 2)
 	var conn net.Conn
-	if client.tls {
+	if client.useTLS {
 		conn, err = tls.Dial(parts[0], parts[1], &client.tlsConfig)
 	} else {
 		conn, err = net.Dial(parts[0], parts[1])

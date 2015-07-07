@@ -21,7 +21,7 @@ type Server struct {
 	sessions    map[string]Session
 	locker      *sync.RWMutex
 	tlsConfig   tls.Config
-	tls         bool
+	useTLS      bool
 }
 
 func NewServer() *Server {
@@ -30,7 +30,7 @@ func NewServer() *Server {
 	server.sessions = make(map[string]Session)
 	server.clientAlive = false
 	server.locker = new(sync.RWMutex)
-	server.tls = false
+	server.useTLS = false
 	return server
 }
 
@@ -95,7 +95,7 @@ func (server *Server) ConfigTLS(certFile, privFile string) {
 		ClientCAs:    pool,
 	}
 	server.tlsConfig.Rand = rand.Reader
-	server.tls = true
+	server.useTLS = true
 }
 
 func (server *Server) handleConnection(conn net.Conn) {
@@ -114,7 +114,7 @@ func (server *Server) handleConnection(conn net.Conn) {
 
 func (server *Server) handleClient(conn net.Conn) {
 	log.Printf("New Client: %s\n", conn.RemoteAddr().String())
-	if server.tls {
+	if server.useTLS {
 		conn = tls.Server(conn, &server.tlsConfig)
 	}
 	server.RegisterClient(conn)
