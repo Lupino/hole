@@ -6,6 +6,7 @@ import (
 	"sync"
 )
 
+// ReadStream define the base read stream.
 type ReadStream struct {
 	buffer     [][]byte
 	bufferSize int
@@ -15,11 +16,13 @@ type ReadStream struct {
 	waiting    bool
 }
 
+// WriteStream define the base write stream.
 type WriteStream struct {
-	sessionId []byte
+	sessionID []byte
 	conn      Conn
 }
 
+// NewReadStream create a read strean
 func NewReadStream() *ReadStream {
 	var rs = new(ReadStream)
 	rs.locker = new(sync.RWMutex)
@@ -28,6 +31,7 @@ func NewReadStream() *ReadStream {
 	return rs
 }
 
+// FeedData feed buffer from a socket or other.
 func (r *ReadStream) FeedData(buf []byte) {
 	r.locker.Lock()
 	defer r.locker.Unlock()
@@ -40,6 +44,7 @@ func (r *ReadStream) FeedData(buf []byte) {
 	}
 }
 
+// FeedEOF feed eof when the stream is closed.
 func (r *ReadStream) FeedEOF() {
 	r.locker.Lock()
 	defer r.locker.Unlock()
@@ -87,11 +92,12 @@ func (r *ReadStream) Read(buf []byte) (length int, err error) {
 }
 
 func (w *WriteStream) Write(data []byte) (n int, err error) {
-	err = w.conn.Send(EncodePacket(w.sessionId, data))
+	err = w.conn.Send(EncodePacket(w.sessionID, data))
 	n = len(data)
 	return
 }
 
+// Close the write stream.
 func (w *WriteStream) Close() error {
 	// return w.conn.Close()
 	_, err := w.Write([]byte("EOF"))

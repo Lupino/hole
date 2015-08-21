@@ -38,19 +38,19 @@ func main() {
 
 	priv, _ := rsa.GenerateKey(rand.Reader, 1024)
 	pub := &priv.PublicKey
-	ca_b, err := x509.CreateCertificate(rand.Reader, ca, ca, pub, priv)
+	caB, err := x509.CreateCertificate(rand.Reader, ca, ca, pub, priv)
 	if err != nil {
 		log.Println("create ca failed", err)
 		return
 	}
-	ca_f := prefix + "ca.pem"
-	log.Println("write to", ca_f)
-	ioutil.WriteFile(ca_f, ca_b, 0600)
+	caF := prefix + "ca.pem"
+	log.Println("write to", caF)
+	ioutil.WriteFile(caF, caB, 0600)
 
-	priv_f := prefix + "ca.key"
-	priv_b := x509.MarshalPKCS1PrivateKey(priv)
-	log.Println("write to", priv_f)
-	ioutil.WriteFile(priv_f, priv_b, 0600)
+	privF := prefix + "ca.key"
+	privB := x509.MarshalPKCS1PrivateKey(priv)
+	log.Println("write to", privF)
+	ioutil.WriteFile(privF, privB, 0600)
 
 	cert2 := &x509.Certificate{
 		SerialNumber: big.NewInt(1658),
@@ -67,24 +67,24 @@ func main() {
 	}
 	priv2, _ := rsa.GenerateKey(rand.Reader, 1024)
 	pub2 := &priv2.PublicKey
-	cert2_b, err2 := x509.CreateCertificate(rand.Reader, cert2, ca, pub2, priv)
+	cert2B, err2 := x509.CreateCertificate(rand.Reader, cert2, ca, pub2, priv)
 	if err2 != nil {
 		log.Println("create cert2 failed", err2)
 		return
 	}
 
-	cert2_f := prefix + "cert.pem"
-	log.Println("write to", cert2_f)
-	ioutil.WriteFile(cert2_f, cert2_b, 0600)
+	cert2F := prefix + "cert.pem"
+	log.Println("write to", cert2F)
+	ioutil.WriteFile(cert2F, cert2B, 0600)
 
-	priv2_f := prefix + "cert.key"
-	priv2_b := x509.MarshalPKCS1PrivateKey(priv2)
-	log.Println("write to", priv2_f)
-	ioutil.WriteFile(priv2_f, priv2_b, 0600)
+	priv2F := prefix + "cert.key"
+	priv2B := x509.MarshalPKCS1PrivateKey(priv2)
+	log.Println("write to", priv2F)
+	ioutil.WriteFile(priv2F, priv2B, 0600)
 
-	ca_c, _ := x509.ParseCertificate(ca_b)
-	cert2_c, _ := x509.ParseCertificate(cert2_b)
+	caC, _ := x509.ParseCertificate(caB)
+	cert2C, _ := x509.ParseCertificate(cert2B)
 
-	err3 := cert2_c.CheckSignatureFrom(ca_c)
+	err3 := cert2C.CheckSignatureFrom(caC)
 	log.Println("check signature", err3 == nil)
 }

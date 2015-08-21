@@ -14,6 +14,7 @@ import (
 	"sync"
 )
 
+// Server define a server type.
 type Server struct {
 	client      Conn
 	clientAlive bool
@@ -24,6 +25,7 @@ type Server struct {
 	useTLS      bool
 }
 
+// NewServer create a new server.
 func NewServer() *Server {
 	var server = new(Server)
 	server.alive = true
@@ -34,6 +36,7 @@ func NewServer() *Server {
 	return server
 }
 
+// Serve on an address.
 func (server *Server) Serve(addr string) {
 	parts := strings.SplitN(addr, "://", 2)
 	listen, err := net.Listen(parts[0], parts[1])
@@ -55,6 +58,7 @@ func (server *Server) Serve(addr string) {
 	}
 }
 
+// AssignClient assign a client connection.
 func (server *Server) AssignClient(conn net.Conn) bool {
 	server.locker.Lock()
 	defer server.locker.Unlock()
@@ -76,17 +80,18 @@ func (server *Server) clientIsAlive() bool {
 	return server.clientAlive
 }
 
+// ConfigTLS config tls for server
 func (server *Server) ConfigTLS(certFile, privFile string) {
-	ca_b, _ := ioutil.ReadFile(certFile)
-	ca, _ := x509.ParseCertificate(ca_b)
-	priv_b, _ := ioutil.ReadFile(privFile)
-	priv, _ := x509.ParsePKCS1PrivateKey(priv_b)
+	caB, _ := ioutil.ReadFile(certFile)
+	ca, _ := x509.ParseCertificate(caB)
+	privB, _ := ioutil.ReadFile(privFile)
+	priv, _ := x509.ParsePKCS1PrivateKey(privB)
 
 	pool := x509.NewCertPool()
 	pool.AddCert(ca)
 
 	cert := tls.Certificate{
-		Certificate: [][]byte{ca_b},
+		Certificate: [][]byte{caB},
 		PrivateKey:  priv,
 	}
 
@@ -102,14 +107,14 @@ func (server *Server) ConfigTLS(certFile, privFile string) {
 func (server *Server) handleConnection(conn net.Conn) {
 	log.Printf("Handle connection: %s\n", conn.RemoteAddr().String())
 	server.locker.Lock()
-	sessionId := uuid.NewV4().Bytes()
-	session := NewSession(sessionId, server.client)
-	server.sessions[string(sessionId)] = session
+	sessionID := uuid.NewV4().Bytes()
+	session := NewSession(sessionID, server.client)
+	server.sessions[string(sessionID)] = session
 	server.locker.Unlock()
 	go PipeThenClose(conn, session.w)
 	PipeThenClose(session.r, conn)
 	server.locker.Lock()
-	delete(server.sessions, string(session.Id))
+	delete(server.sessions, string(session.ID))
 	server.locker.Unlock()
 }
 
@@ -125,7 +130,7 @@ func (server *Server) handleClient(conn net.Conn) {
 	}
 	var err error
 	var payload []byte
-	var sessionId, data []byte
+	var sessionID, data []byte
 	var ok bool
 	var session Session
 	for server.alive {
@@ -137,9 +142,9 @@ func (server *Server) handleClient(conn net.Conn) {
 			}
 			break
 		}
-		sessionId, data = DecodePacket(payload)
+		sessionID, data = DecodePacket(payload)
 		server.locker.Lock()
-		session, ok = server.sessions[string(sessionId)]
+		session, ok = server.sessions[string(sessionID)]
 		server.locker.Unlock()
 		if !ok {
 			continue

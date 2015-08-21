@@ -7,30 +7,34 @@ import (
 )
 
 var (
-	MAGIC_NOT_MATCH = errors.New("Magic not match.")
-	MAGIC_REQUEST   = []byte("\x00REQ")
-	MAGIC_RESPONSE  = []byte("\x00RES")
+    // ErrMagicNotMatch raise when the magic is no match.
+	ErrMagicNotMatch = errors.New("Magic not match.")
+    // MagicRequest a request magic.
+	MagicRequest   = []byte("\x00REQ")
+    // MagicResponse a response magic.
+	MagicResponse  = []byte("\x00RES")
 )
 
+// Conn define the conn.
 type Conn struct {
 	net.Conn
 	RequestMagic  []byte
 	ResponseMagic []byte
 }
 
-// Create a connection
+// NewConn create a connection
 func NewConn(conn net.Conn, reqMagic, resMagic []byte) Conn {
 	return Conn{Conn: conn, RequestMagic: reqMagic, ResponseMagic: resMagic}
 }
 
-// Create a server connection
+//NewServerConn create a server connection
 func NewServerConn(conn net.Conn) Conn {
-	return NewConn(conn, MAGIC_REQUEST, MAGIC_RESPONSE)
+	return NewConn(conn, MagicRequest, MagicResponse)
 }
 
-// Create a client connection
+// NewClientConn create a client connection
 func NewClientConn(conn net.Conn) Conn {
-	return NewConn(conn, MAGIC_RESPONSE, MAGIC_REQUEST)
+	return NewConn(conn, MagicResponse, MagicRequest)
 }
 
 // Receive waits for a new message on conn, and receives its payload.
@@ -43,7 +47,7 @@ func (conn *Conn) Receive() (rdata []byte, rerr error) {
 	}
 
 	if !bytes.Equal(magic, conn.RequestMagic) {
-		return magic, MAGIC_NOT_MATCH
+		return magic, ErrMagicNotMatch
 	}
 
 	// Read header

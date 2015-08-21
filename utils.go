@@ -8,11 +8,13 @@ import (
 )
 
 // Split the message payload
-var NULL_CHAR = []byte("\x00\x01")
+var NullChar = []byte("\x00\x01")
 
 // Framing:
 // In order to handle framing in Send/Recieve, as these give frame
 // boundaries we use a very simple 4 bytes header.
+
+// MakeHeader make a very simple 4 bytes header.
 func MakeHeader(data []byte) ([]byte, error) {
 	header := make([]byte, 4)
 
@@ -30,6 +32,7 @@ func MakeHeader(data []byte) ([]byte, error) {
 	return header, nil
 }
 
+// ParseHeader parse a very simple 4 bytes header and extract the data length.
 func ParseHeader(header []byte) uint32 {
 	length := uint32(header[0])<<24 | uint32(header[1])<<16 | uint32(header[2])<<8 | uint32(header[3])
 	length = length & ^uint32(0x80000000)
@@ -37,23 +40,26 @@ func ParseHeader(header []byte) uint32 {
 	return length
 }
 
-func EncodePacket(sessionId, data []byte) []byte {
+// EncodePacket encode the data with sessionID.
+func EncodePacket(sessionID, data []byte) []byte {
 	var buffer = bytes.NewBuffer(nil)
-	buffer.Write(sessionId)
-	buffer.Write(NULL_CHAR)
+	buffer.Write(sessionID)
+	buffer.Write(NullChar)
 	buffer.Write(data)
 	return buffer.Bytes()
 }
 
-func DecodePacket(payload []byte) (sessionId, data []byte) {
-	parts := bytes.SplitN(payload, NULL_CHAR, 2)
-	var err = fmt.Sprintf("InvalId %v\n", payload)
+// DecodePacket decode the data and sessionID from a packet.
+func DecodePacket(payload []byte) (sessionID, data []byte) {
+	parts := bytes.SplitN(payload, NullChar, 2)
+	var err = fmt.Sprintf("InvalID %v\n", payload)
 	if len(parts) == 1 {
 		panic(err)
 	}
 	return parts[0], parts[1]
 }
 
+// PipeThenClose copies data from src to dst, closes dst when done.
 func PipeThenClose(src io.Reader, dst io.WriteCloser) {
 	var buf = make([]byte, 1024)
 	defer dst.Close()

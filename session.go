@@ -1,18 +1,20 @@
 package hole
 
+// Session define session.
 type Session struct {
-	Id []byte
+	ID []byte
 	r  *ReadStream
 	w  *WriteStream
 }
 
-func NewSession(sessionId []byte, conn Conn) Session {
+// NewSession create a new session with sessionID and conn.
+func NewSession(sessionID []byte, conn Conn) Session {
 	return Session{
-		Id: sessionId,
+		ID: sessionID,
 		r:  NewReadStream(),
 		w: &WriteStream{
 			conn:      conn,
-			sessionId: sessionId,
+			sessionID: sessionID,
 		},
 	}
 }

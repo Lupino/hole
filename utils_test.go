@@ -21,15 +21,15 @@ func TestHeader(t *testing.T) {
 }
 
 func TestEncodeAndDecodePacket(t *testing.T) {
-	sessionId := uuid.NewV4().Bytes()
+	sessionID := uuid.NewV4().Bytes()
 	data := []byte("This is a payload.")
 
-	payload := EncodePacket(sessionId, data)
+	payload := EncodePacket(sessionID, data)
 
 	sid, d := DecodePacket(payload)
 
-	if !bytes.Equal(sid, sessionId) {
-		t.Fatalf("SessionId: except: %x, got: %x", sessionId, sid)
+	if !bytes.Equal(sid, sessionID) {
+		t.Fatalf("SessionID: except: %x, got: %x", sessionID, sid)
 	}
 
 	if !bytes.Equal(d, data) {
