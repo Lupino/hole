@@ -16,7 +16,7 @@ Last you can visit the `holed` to replace the real server.
 The hole suit the situation: A(private) can connect B(global), C(private) can connect B,
 but B can't connect C, B can't connect A, and A can't connect C.
 
-The hole support protocol `tcp` `udp` `tcp6` `udp6` and `unix socket`.
+The hole support protocol `tcp` `tcp6` and `unix socket`.
 
 Install
 -------
