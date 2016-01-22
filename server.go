@@ -37,6 +37,8 @@ func NewServer() *Server {
 }
 
 // Serve on an address.
+// The network net must be a stream-oriented network: "tcp",
+// "tcp4", "tcp6", "unix" or "unixpacket".
 func (server *Server) Serve(addr string) {
 	parts := strings.SplitN(addr, "://", 2)
 	listen, err := net.Listen(parts[0], parts[1])
