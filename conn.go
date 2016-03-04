@@ -4,30 +4,35 @@ import (
 	"bytes"
 	"errors"
 	"net"
+	"sync"
 )
 
 var (
-    // ErrMagicNotMatch raise when the magic is no match.
+	// ErrMagicNotMatch raise when the magic is no match.
 	ErrMagicNotMatch = errors.New("Magic not match.")
-    // MagicRequest a request magic.
-	MagicRequest   = []byte("\x00REQ")
-    // MagicResponse a response magic.
-	MagicResponse  = []byte("\x00RES")
+	// MagicRequest a request magic.
+	MagicRequest = []byte("\x00REQ")
+	// MagicResponse a response magic.
+	MagicResponse = []byte("\x00RES")
 )
 
-// Conn define the conn.
+// Conn a custom connect
 type Conn struct {
 	net.Conn
 	RequestMagic  []byte
 	ResponseMagic []byte
+	wlocker       *sync.RWMutex
+	rlocker       *sync.RWMutex
 }
 
 // NewConn create a connection
 func NewConn(conn net.Conn, reqMagic, resMagic []byte) Conn {
-	return Conn{Conn: conn, RequestMagic: reqMagic, ResponseMagic: resMagic}
+	var wlocker = new(sync.RWMutex)
+	var rlocker = new(sync.RWMutex)
+	return Conn{Conn: conn, RequestMagic: reqMagic, ResponseMagic: resMagic, wlocker: wlocker, rlocker: rlocker}
 }
 
-//NewServerConn create a server connection
+// NewServerConn create a server connection
 func NewServerConn(conn net.Conn) Conn {
 	return NewConn(conn, MagicRequest, MagicResponse)
 }
@@ -39,6 +44,8 @@ func NewClientConn(conn net.Conn) Conn {
 
 // Receive waits for a new message on conn, and receives its payload.
 func (conn *Conn) Receive() (rdata []byte, rerr error) {
+	conn.rlocker.RLock()
+	defer conn.rlocker.RUnlock()
 
 	// Read magic
 	magic, err := conn.receive(4)
@@ -78,6 +85,8 @@ func (conn *Conn) receive(length uint32) ([]byte, error) {
 
 // Send a new message.
 func (conn *Conn) Send(data []byte) error {
+	conn.wlocker.Lock()
+	defer conn.wlocker.Unlock()
 	header, err := MakeHeader(data)
 	if err != nil {
 		return err
