@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"github.com/felixge/tcpkeepalive"
 	"io/ioutil"
 	"log"
 	"net"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Client define a client.
@@ -60,6 +62,12 @@ func (client *Client) Connect(addr string) (err error) {
 	if err != nil {
 		log.Printf("Is the hole server started?\n")
 		return
+	}
+
+	if k, err := tcpkeepalive.EnableKeepAlive(conn); err == nil {
+		k.SetKeepAliveIdle(30 * time.Second)
+		k.SetKeepAliveCount(4)
+		k.SetKeepAliveInterval(5 * time.Second)
 	}
 
 	client.alive = true
