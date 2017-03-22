@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
+	"github.com/felixge/tcpkeepalive"
 	"github.com/satori/go.uuid"
 	"io"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Server define a server type.
@@ -51,6 +53,11 @@ func (server *Server) Serve(addr string) {
 		conn, err := listen.Accept()
 		if err != nil {
 			log.Fatal(err)
+		}
+		if k, err := tcpkeepalive.EnableKeepAlive(conn); err == nil {
+			k.SetKeepAliveIdle(30 * time.Second)
+			k.SetKeepAliveCount(4)
+			k.SetKeepAliveInterval(5 * time.Second)
 		}
 		if server.clientIsAlive() {
 			go server.handleConnection(conn)
